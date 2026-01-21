@@ -1,0 +1,128 @@
+# SAML Test IDP Configuration
+# ============================
+# This is an example configuration file for the SAML Test IDP.
+# Copy this file to config.yaml and modify as needed.
+
+# Server Configuration
+server:
+  # Host to bind the server to
+  host: "localhost"
+  # Port to bind the server to
+  port: 8080
+  # Base URL for the IDP (used in metadata and redirects)
+  # If not set, will be constructed from host:port
+  base_url: "http://localhost:8080"
+
+# Identity Provider Configuration
+idp:
+  # Entity ID for the IDP (usually the metadata URL)
+  entity_id: "http://localhost:8080/metadata"
+  
+  # Certificate and private key for signing SAML assertions
+  # You can provide these inline or as file paths
+  
+  # Option 1: File paths
+  certificate_path: "certs/idp.crt"
+  private_key_path: "certs/idp.key"
+  
+  # Option 2: Inline content
+  # certificate: |
+  #   -----BEGIN CERTIFICATE-----
+  #   MIIDXTCCAkWgAwIBAgIJAKZ...
+  #   -----END CERTIFICATE-----
+  # private_key: |
+  #   -----BEGIN RSA PRIVATE KEY-----
+  #   MIIEowIBAAKCAQEA...
+  #   -----END RSA PRIVATE KEY-----
+
+# Service Provider Configuration
+# Define each SP that should be allowed to authenticate against this IDP
+service_providers:
+  # Example SP 1: Basic configuration with ACS URL
+  - entity_id: "https://app.example.com/saml/metadata"
+    # Assertion Consumer Service URL - where SAML responses are sent
+    acs_url: "https://app.example.com/saml/acs"
+    
+    # Name ID format to use for this SP
+    # Options: email, persistent, transient, unspecified
+    # Default: email
+    name_id_format: "email"
+    
+    # Users allowed to authenticate to this SP
+    users:
+      - name: "Alice Developer"
+        # The value used in the SAML NameID element
+        name_id: "alice@example.com"
+        # Arbitrary attributes to include in the SAML assertion
+        attributes:
+          email: "alice@example.com"
+          firstName: "Alice"
+          lastName: "Developer"
+          displayName: "Alice Developer"
+          groups:
+            - "developers"
+            - "admin"
+          role: "admin"
+          department: "Engineering"
+      
+      - name: "Bob Tester"
+        name_id: "bob@example.com"
+        attributes:
+          email: "bob@example.com"
+          firstName: "Bob"
+          lastName: "Tester"
+          displayName: "Bob Tester"
+          groups:
+            - "testers"
+          role: "user"
+          department: "QA"
+      
+      - name: "Carol Manager"
+        name_id: "carol@example.com"
+        attributes:
+          email: "carol@example.com"
+          firstName: "Carol"
+          lastName: "Manager"
+          displayName: "Carol Manager"
+          groups:
+            - "managers"
+            - "readonly"
+          role: "manager"
+          department: "Operations"
+
+  # Example SP 2: Using persistent Name ID
+  - entity_id: "https://erp.example.com"
+    acs_url: "https://erp.example.com/sso/saml/consume"
+    name_id_format: "persistent"
+    users:
+      - name: "System Admin"
+        name_id: "admin-uuid-12345"
+        attributes:
+          email: "admin@example.com"
+          role: "superuser"
+          permissions:
+            - "read"
+            - "write"
+            - "admin"
+
+  # Example SP 3: Using SP metadata file instead of ACS URL
+  # Uncomment to use:
+  # - entity_id: "https://custom-app.example.com"
+  #   metadata_file: "/path/to/sp-metadata.xml"
+  #   name_id_format: "transient"
+  #   users:
+  #     - name: "Test User"
+  #       name_id: "test-session-id"
+  #       attributes:
+  #         email: "test@example.com"
+
+# Generating Certificates
+# =======================
+# You can generate self-signed certificates for testing with:
+#
+#   make generate-certs
+#
+# Or manually:
+#
+#   openssl req -x509 -newkey rsa:2048 -keyout certs/idp.key \
+#     -out certs/idp.crt -days 365 -nodes -subj "/CN=SAML Test IDP"
